@@ -28,18 +28,19 @@ def entity_collision(pipes):
     for pipe in pipes:
         if bird_rect.colliderect(pipe):
             death_sound.play()
-            can_score = True
+            can_score = True #set immunity upon collision to avoid setting of multiple deaths 
             return False
-    if bird_rect.top <= -20 or bird_rect.bottom >= 431:
+    if bird_rect.top <= -20 or bird_rect.bottom >= 431: #bird unable to go off screen
+            death_sound.play()
             return False 
     return True
 
 def moving_floor():
     screen.blit(floor_surface,(floor_shift,431))
-    screen.blit(floor_surface,(floor_shift + 288,431))
+    screen.blit(floor_surface,(floor_shift + 288,431)) #move floor like a treadmill
 
 def rotate_bird(bird):
-    new_bird = pygame.transform.rotozoom(bird,-bird_movement * 6,1)
+    new_bird = pygame.transform.rotozoom(bird,-bird_movement * 6,1) #tilting when flying
     print()
     return new_bird
 
@@ -72,12 +73,13 @@ def update_score(score, high_score):
 
 #to initiate mixer in a certain way
 # pygame.mixer.pre_init(frequency= 44100, size= 16, channels= 1, buffer= 512) --> for lower pygame version lower than pygame 2 version
-#start game
+#start a roo
 pygame.init()
 
 #display screen
 screen = pygame.display.set_mode((288, 512))
 pygame.display.set_caption("Flappy Bird")
+
 clock = pygame.time.Clock()
 
 #game variable
@@ -87,8 +89,12 @@ game_active = True
 score = 0
 high_score = 0
 can_score = True
+# boost_status = True
     #ingame Text for scoring system
 game_font = pygame.font.Font("04B_19.ttf",40)
+    #for gimmick
+boost_time = 0
+
 
 #img 
 bg_surface = pygame.image.load("assets/background-day.png").convert()
@@ -103,7 +109,6 @@ bird_frames = [bird_downflap, bird_midflap, bird_upflap]
 bird_index = 0
 bird_surface = bird_frames[bird_index]
 bird_rect = bird_surface.get_rect(center=(50,230))
-
 # predecessor of the above:
 # bird_surface = pygame.image.load("assets/bluebird-midflap.png").convert_alpha()
 # bird_rect = bird_surface.get_rect(center=(50,230))
@@ -112,10 +117,11 @@ bird_rect = bird_surface.get_rect(center=(50,230))
 birdflaps = pygame.USEREVENT + 1  
 pygame.time.set_timer(birdflaps,200) 
 
+#pipe spawning
 pipe_surface = pygame.image.load("assets/pipe-green.png")
 pipe_list = []
 spawnpipe = pygame.USEREVENT
-pygame.time.set_timer(spawnpipe,1500)
+pygame.time.set_timer(spawnpipe,1500) #interval between pipes
 pipe_height = [140,192,256,293,330]
 
 #game over msg
@@ -134,6 +140,7 @@ while True :
         if event.type == pygame.QUIT:
             sys.exit()
 
+        #jump/flying button 
         if event.type == pygame.KEYDOWN :
             if event.key == pygame.K_SPACE and game_active == True:
                 bird_movement = 0 # stopped for a sec so theres no downward momentum
@@ -146,10 +153,20 @@ while True :
                 bird_movement = 0
                 score = 0
 
+            # secret boost
+            if event.key == pygame.K_LSHIFT:
+                print("boost")
+                while True :
+                    game_active = False   
+                    floor_shift -= 6
+                
+
+        #pipe
         if event.type == spawnpipe:
             pipe_list.extend(create_pipe()) 
-            print("pipe")
+            # print("pipe")
 
+        #flap animation
         if event.type == birdflaps :
             if bird_index < 2:
                 bird_index += 1 
